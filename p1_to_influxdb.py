@@ -68,7 +68,7 @@ while True:
 
             pprint.pprint(influx_measurement)
             if len(influx_measurement["fields"]):
-                datapoints = Point().from_dict(influx_measurement)
+                datapoints = Point.from_dict(influx_measurement)
                 write_api.write(bucket=config.bucket,record=datapoints)
                 
 
