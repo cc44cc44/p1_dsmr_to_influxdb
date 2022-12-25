@@ -2,7 +2,8 @@
 
 from dsmr_parser import telegram_specifications, obis_references
 from dsmr_parser.clients import SerialReader, SERIAL_SETTINGS_V4
-from influxdb import InfluxDBClient
+from influxdb_client import InfluxDBClient,Point
+from influxdb_client.client.write_api import SYNCHRONOUS
 import pprint
 import config
 import decimal
@@ -13,9 +14,8 @@ prev_gas = None
 while True:
     try:
         # influx db settings
-        db = InfluxDBClient(
-            config.host, config.port, config.username, config.password, config.database
-        )
+        db_client = InfluxDBClient.from_env_properties()
+        write_api = db_client.write_api(write_options=SYNCHRONOUS)
 
         # serial port settings and version
         serial_reader = SerialReader(
@@ -68,7 +68,9 @@ while True:
 
             pprint.pprint(influx_measurement)
             if len(influx_measurement["fields"]):
-                db.write_points([influx_measurement])
+                datapoints = Point().from_dict(influx_measurement)
+                write_api.write(bucket=config.bucket,record=datapoints)
+                
 
     except Exception as e:
         print(str(e))
